@@ -48,6 +48,8 @@ async def registration_restart(call: types.CallbackQuery,
 
 
 
+
+
 @router.message(RegistrationStates.nickname)
 async def process_nickname(message: types.Message,
                            state: FSMContext):
@@ -104,6 +106,19 @@ async def process_favorite_colour(message: types.Message,
     await state.set_state(RegistrationStates.photo)
 
 
+
+@router.callback_query(lambda call: call.data == "delete_profile")
+async def registration_restart(call: types.CallbackQuery,
+                                   state: FSMContext):
+
+   await bot.send_message(
+        chat_id=call.from_user.id,
+        text="your profile has been deleted!"
+        )
+
+   await state.set_state(RegistrationStates.nickname)
+
+
 @router.message(RegistrationStates.photo)
 async def process_photo(message: types.Message,
                         state: FSMContext,
@@ -135,12 +150,11 @@ async def process_photo(message: types.Message,
         await db.execute_query(
             query=sql_queries.UPDATE_PROFILE_QUERY,
             params=(
-                None,
                 data['nickname'],
                 data['bio'],
+                photo['photo'],
                 data['favorite_music'],
                 data['favorite_colour'],
-                'media/' + file_path,
                 message.from_user.id,
 
             ),
@@ -149,7 +163,7 @@ async def process_photo(message: types.Message,
         await bot.send_message(
             chat_id=message.from_user.id,
             text="You have re-registered successfully"
-        )
+        ),
 
 
     else:
@@ -157,10 +171,15 @@ async def process_photo(message: types.Message,
             query=sql_queries.INSERT_PROFILE_QUERY,
             params=(
                 None,
-                message.from_user.id,
                 data['nickname'],
                 data['bio'],
-                data['photo']
+                data['photo'],
+                data['favorite_music'],
+                data['favorite_colour'],
+
+                message.from_user.id
+
+
 
             ),
             fetch='none'
@@ -171,10 +190,13 @@ async def process_photo(message: types.Message,
 
     await bot.send_message(
           chat_id=message.from_user.id,
-          photo=photo,
           caption=PROFILE_TEXT.format(
               nickname=data['nickname'],
               bio=data['bio'],
+              photo=data['photo'],
+              favorite_music=data['favorite_music'],
+              favorite_colour=data['favorite_colour'],
+
 
             )
                     )
