@@ -35,6 +35,18 @@ async def registration_start(call: types.CallbackQuery,
 
     await state.set_state(RegistrationStates.nickname)
 
+@router.callback_query(lambda call: call.data == "update_profile")
+async def registration_restart(call: types.CallbackQuery,
+                                   state: FSMContext):
+
+   await bot.send_message(
+        chat_id=call.from_user.id,
+        text="Send your Nickname,please!"
+        )
+
+   await state.set_state(RegistrationStates.nickname)
+
+
 
 @router.message(RegistrationStates.nickname)
 async def process_nickname(message: types.Message,
@@ -109,49 +121,60 @@ async def process_photo(message: types.Message,
         'media/' + file_path
     )
     data = await state.get_data()
+
     photo = FSInputFile('media/' + file_path)
-    await bot.send_photo(
-        chat_id=message.from_user.id,
-        photo=photo,
-        caption=PROFILE_TEXT.format(
-            nickname=data['nickname'],
-            bio=data['bio'],
-            favorite_music=data['favorite_music'],
-            favorite_colour=data['favorite_colour'],
-        )
-    )
-
-    await bot.send_message(
-        chat_id=message.from_user.id,
-        text="You have registered successfully"
-    )
-
-    await db.execute_query(
-        query=sql_queries.INSERT_PROFILE_QUERY,
-        params=(
-            None,
-            message.from_user.id,
-            data['nickname'],
-            data['bio'],
-            data['favorite_music'],
-            data['favorite_colour'],
-            'media/' + file_path
-
-        ),
-        fetch="none"
-    )
-
-    await db.execute_query(
+    profile = await db.execute_query(
         query=sql_queries.SELECT_PROFILE_QUERY,
         params=(
-            None,
             message.from_user.id,
-            data['nickname'],
-            data['bio'],
-            data['favorite_music'],
-            data['favorite_colour'],
-            'media/' + file_path
         ),
-        fetch='all'
+        fetch='one'
     )
+    if profile:
 
+        await db.execute_query(
+            query=sql_queries.UPDATE_PROFILE_QUERY,
+            params=(
+                None,
+                data['nickname'],
+                data['bio'],
+                data['favorite_music'],
+                data['favorite_colour'],
+                'media/' + file_path,
+                message.from_user.id,
+
+            ),
+            fetch="none"
+        )
+        await bot.send_message(
+            chat_id=message.from_user.id,
+            text="You have re-registered successfully"
+        )
+
+
+    else:
+        await db.execute_query(
+            query=sql_queries.INSERT_PROFILE_QUERY,
+            params=(
+                None,
+                message.from_user.id,
+                data['nickname'],
+                data['bio'],
+                data['photo']
+
+            ),
+            fetch='none'
+        )
+    await bot.send_message(
+          chat_id=message.from_user.id,
+          text="You have registered successfully")
+
+    await bot.send_message(
+          chat_id=message.from_user.id,
+          photo=photo,
+          caption=PROFILE_TEXT.format(
+              nickname=data['nickname'],
+              bio=data['bio'],
+
+            )
+                    )
