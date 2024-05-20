@@ -107,17 +107,6 @@ async def process_favorite_colour(message: types.Message,
 
 
 
-@router.callback_query(lambda call: call.data == "delete_profile")
-async def registration_restart(call: types.CallbackQuery,
-                                   state: FSMContext):
-
-   await bot.send_message(
-        chat_id=call.from_user.id,
-        text="your profile has been deleted!"
-        )
-
-   await state.set_state(RegistrationStates.nickname)
-
 
 @router.message(RegistrationStates.photo)
 async def process_photo(message: types.Message,
@@ -152,9 +141,10 @@ async def process_photo(message: types.Message,
             params=(
                 data['nickname'],
                 data['bio'],
-                photo['photo'],
                 data['favorite_music'],
                 data['favorite_colour'],
+                'media/' + file_path,
+
                 message.from_user.id,
 
             ),
@@ -171,32 +161,46 @@ async def process_photo(message: types.Message,
             query=sql_queries.INSERT_PROFILE_QUERY,
             params=(
                 None,
+                message.from_user.id,
                 data['nickname'],
                 data['bio'],
-                data['photo'],
                 data['favorite_music'],
                 data['favorite_colour'],
+                'media/' + file_path,
 
-                message.from_user.id
 
 
 
             ),
             fetch='none'
         )
-    await bot.send_message(
-          chat_id=message.from_user.id,
-          text="You have registered successfully")
+        await bot.send_message(
+            chat_id=message.from_user.id,
+             text="You have registered successfully")
+    photo=types.FSInputFile('media/' + file_path)
 
-    await bot.send_message(
+
+    await bot.send_photo(
           chat_id=message.from_user.id,
+          photo=photo,
           caption=PROFILE_TEXT.format(
               nickname=data['nickname'],
               bio=data['bio'],
-              photo=data['photo'],
               favorite_music=data['favorite_music'],
               favorite_colour=data['favorite_colour'],
 
 
+
             )
                     )
+
+
+@router.callback_query(lambda call: call.data == "Delete_profile")
+async def delete_profile(call: types.CallbackQuery,
+                               state: FSMContext):
+    await bot.send_message(
+        chat_id=call.from_user.id,
+        text="you have deleted your profile!"
+    )
+
+
