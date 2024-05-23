@@ -74,7 +74,7 @@ async def reference_link_creation(call: types.CallbackQuery,
 async def view_balance(call: types.CallbackQuery,
                                    db=AsyncDatabase()):
     user1= await db.execute_query(
-        query=sql_queries.SELECT_USER_QUERY,
+        query=sql_queries.SELECT_USER_BALANCE_QUERY,
         params=(
             call.from_user.id,
         ),
@@ -82,5 +82,21 @@ async def view_balance(call: types.CallbackQuery,
     )
     await bot.send_message(
        chat_id=call.from_user.id,
-       text=f"ur balance:{user1['balance']}"
+       text=f"ur balance:{user1['COALESCE(BALANCE,0)']}"
     )
+
+@router.callback_query(lambda call: call.data == "reference_list")
+async def reference_list(call: types.CallbackQuery,
+                                   db=AsyncDatabase()):
+    await db.execute_query(
+        query=sql_queries.SELECT_USER_QUERY,
+        params=(
+            call.from_user.id,
+        ),
+        fetch="one",
+    )
+    await bot.send_message(
+            chat_id=call.from_user.id,
+            text=f"no users following link"
+
+        )

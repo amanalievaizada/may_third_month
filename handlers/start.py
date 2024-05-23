@@ -54,7 +54,7 @@ async def start_menu(message: types.Message,
 async def process_reference_link(token, message, db=AsyncDatabase()):
     link = await create_start_link(bot=bot, payload=token)
     owner = await db.execute_query(
-        query=sql_queries.SELECT_USER_BY_LINK_QUERY,
+        query=sql_queries.SELECT_USER_BY_LINK1_QUERY,
         params=(
             link,
         ),

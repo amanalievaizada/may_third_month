@@ -197,7 +197,11 @@ async def process_photo(message: types.Message,
 
 @router.callback_query(lambda call: call.data == "Delete_profile")
 async def delete_profile(call: types.CallbackQuery,
-                               state: FSMContext):
+                                    db=AsyncDatabase()):
+    await call.message.delete()
+    await db.execute_query(query=sql_queries.DELETE_FROM_QUERY,
+                           params=(call.from_user.id,))
+
     await bot.send_message(
         chat_id=call.from_user.id,
         text="you have deleted your profile!"

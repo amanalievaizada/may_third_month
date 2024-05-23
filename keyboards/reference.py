@@ -13,10 +13,16 @@ async def reference_menu_keyboard():
         text="balance",
         callback_data="reference_balance"
     )
+    list_button = InlineKeyboardButton(
+        text="list",
+        callback_data="reference_list"
+    )
+
     markup = InlineKeyboardMarkup(
         inline_keyboard=[
             [link_button],
             [balance_button],
+            [list_button],
 
         ]
     )
